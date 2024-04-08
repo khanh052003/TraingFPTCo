@@ -1,0 +1,91 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["title"] = "Topics";
+    ViewData["breadcrumb"] = "Home";
+    ViewData["breadcrumb_active"] = "Topics";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+
+    bool saveStatus = Convert.ToBoolean(TempData["saveStatus"]);
+    bool updateStatus = Convert.ToBoolean(TempData["updateStatus"]);
+    // lay ra giay o thoi diem hien tai
+    var Timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+}
+<div class="row">
+    <div class="col-sm-12 col-md-12">
+        <h3 class="text-center"> Topics List</h3>
+        <a class="btn btn-primary" href="@Url.Action("Add", "Topics")"> Add new Topic</a>
+        @if (TempData["saveStatus"] != null)
+        {
+            @if (saveStatus)
+            {
+                <div class="text-success my-3"> Add Successfully</div>
+            }
+            else
+            {
+                <div class="text-danger my-3"> Add Failure</div>
+            }
+        }
+        @if (TempData["updateStatus"] != null)
+        {
+            @if (updateStatus)
+            {
+                <div class="text-success my-3"> Update Successfully</div>
+            }
+            else
+            {
+                <div class="text-danger my-3"> Update Failure</div>
+            }
+        }
+
+        <table class="table table-bordered table-striped mt-3">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Course ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Documents</th>
+                    <th>Attach Files</th>
+                    <th>Type Document</th>
+                    <th>Poster Topic</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Deleted At</th>
+                    <th colspan="2" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var topic in Model)
+                {
+                    <tr>
+                        <td>@topic.Id</td>
+                        <td>@topic.CourseId</td>
+                        <td>@topic.Name</td>
+                        <td>@topic.Description</td>
+                        <td>@topic.Status</td>
+                        <td>@topic.Documents</td>
+                        <td>@topic.AttachFiles</td>
+                        <td>@topic.TypeDocument</td>
+                        <td>@topic.PosterTopic</td>
+                        <td>@topic.CreatedAt</td>
+                        <td>@topic.UpdatedAt</td>
+                        <td>@topic.DeletedAt</td>
+                        <td>
+                            <a class="btn btn-info btn-sm" href="@Url.Action("Update", "Topics", new { id = topic.Id })"> Edit</a>
+                        </td>
+                        <td>
+                            <button id="@topic.Id" class="btn btn-danger btn-sm js-delete-topic"> Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@section javascripts
+{
+    <script src="/js/topic.js?v=@Timestamp"></script>
+}
