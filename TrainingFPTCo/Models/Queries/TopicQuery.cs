@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using TrainingFPT.Models;
+using TrainingFPTCo.DataDBContext;
 
 namespace TrainingFPTCo.Models.Queries
 {
@@ -12,27 +13,26 @@ namespace TrainingFPTCo.Models.Queries
             List<TopicDetail> topics = new List<TopicDetail>();
             using (SqlConnection connection = Database.GetSqlConnection())
             {
-                string sqlQuery = string.Empty;
-                if (filter != null)
+                string sqlQuery = "SELECT [to].*, [co].[Name] AS CourseName " +
+                                  "FROM [Topics] AS [to] " +
+                                  "INNER JOIN [Courses] AS [co] ON [to].[CourseId] = [co].[Id] " +
+                                  "WHERE ([to].[Name] LIKE @keyword OR [co].[Name] LIKE @keyword) AND [to].[DeletedAt] IS NULL";
+
+                if (!string.IsNullOrEmpty(filter))
                 {
-                    sqlQuery = "SELECT * FROM [Topics] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL AND [Status] = @status";
-                }
-                else
-                {
-                    sqlQuery = "SELECT * FROM [Topics] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL";
+                    sqlQuery += " AND [to].[Status] = @status";
                 }
 
                 SqlCommand cmd = new SqlCommand(sqlQuery, connection);
                 cmd.Parameters.AddWithValue("@keyword", dataKeyword ?? DBNull.Value.ToString());
-                if (filter != null)
+
+                if (!string.IsNullOrEmpty(filter))
                 {
-                    cmd.Parameters.AddWithValue("@status", filter ?? DBNull.Value.ToString());
+                    cmd.Parameters.AddWithValue("@status", filter);
                 }
 
-
-                string sql = "SELECT [to].*, [co].[Name] FROM [Topics] AS [to] INNER JOIN [Courses] AS [co] ON [to].[CourseId] = [co].[Id] WHERE [co].[DeletedAt] IS NULL";
                 connection.Open();
-                //SqlCommand cmd = new SqlCommand(sql, connection);
+
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -46,11 +46,10 @@ namespace TrainingFPTCo.Models.Queries
                         detail.Status = reader["Status"].ToString();
                         detail.ViewDocuments = reader["Documents"].ToString();
                         detail.ViewAttachFile = reader["AttachFile"].ToString();
-                        detail.viewCourseName = reader["CourseId"].ToString();
+                        detail.viewCourseName = reader["CourseName"].ToString();
                         topics.Add(detail);
                     }
                 }
-                connection.Close();
             }
             return topics;
         }

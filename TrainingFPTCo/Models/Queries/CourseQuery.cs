@@ -112,22 +112,81 @@ namespace TrainingFPTCo.Models.Queries
         }
 
 
-
-
         public List<CourseDetail> GetAllDataCourses(string? keyword, string? filter)
         {
             string dataKeyword = "%" + keyword + "%";
             List<CourseDetail> courses = new List<CourseDetail>();
             using (SqlConnection connection = Database.GetSqlConnection())
             {
-                string sqlQuery = string.Empty;
-                if (filter != null)
+                string sqlQuery = "SELECT [co].*, [ca].[Name] AS CategoryName " +
+                                  "FROM [Courses] AS [co] " +
+                                  "INNER JOIN [Categories] AS [ca] ON [co].[CategoryId] = [ca].[Id] " +
+                                  "WHERE ([co].[Name] LIKE @keyword OR [ca].[Name] LIKE @keyword) " +
+                                  "AND [co].[DeletedAt] IS NULL";
+
+                if (!string.IsNullOrEmpty(filter))
                 {
-                    sqlQuery = "SELECT * FROM [Courses] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL AND [Status] = @status";
+                    sqlQuery += " AND [co].[Status] = @status";
+                }
+
+                SqlCommand cmd = new SqlCommand(sqlQuery, connection);
+                cmd.Parameters.AddWithValue("@keyword", dataKeyword ?? DBNull.Value.ToString());
+
+                if (!string.IsNullOrEmpty(filter))
+                {
+                    cmd.Parameters.AddWithValue("@status", filter);
+                }
+
+                connection.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        CourseDetail detail = new CourseDetail();
+                        detail.Id = Convert.ToInt32(reader["Id"]);
+                        detail.Name = reader["Name"].ToString();
+                        detail.Description = reader["Description"].ToString();
+                        detail.CategoryId = Convert.ToInt32(reader["CategoryId"]);
+                        detail.StartDate = Convert.ToDateTime(reader["StartDate"]);
+                        detail.EndDate = Convert.ToDateTime(reader["EndDate"]);
+                        detail.ViewImageCourse = reader["Image"].ToString();
+                        detail.Status = reader["Status"].ToString();
+                        detail.ViewCategoryName = reader["CategoryName"].ToString();
+                        courses.Add(detail);
+                    }
+                }
+            }
+            return courses;
+        }
+        public List<CourseDetail> GetAllDataCourses(string? keyword, string? filter, string? category)
+        {
+            string dataKeyword = "%" + keyword + "%";
+            List<CourseDetail> courses = new List<CourseDetail>();
+            using (SqlConnection connection = Database.GetSqlConnection())
+            {
+                string sqlQuery = string.Empty;
+                if (!string.IsNullOrEmpty(category))
+                {
+                    if (filter != null)
+                    {
+                        sqlQuery = "SELECT * FROM [Courses] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL AND [Status] = @status AND [CategoryId] IN (SELECT [Id] FROM [Categories] WHERE [Name] LIKE @categoryName)";
+                    }
+                    else
+                    {
+                        sqlQuery = "SELECT * FROM [Courses] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL AND [CategoryId] IN (SELECT [Id] FROM [Categories] WHERE [Name] LIKE @categoryName)";
+                    }
                 }
                 else
                 {
-                    sqlQuery = "SELECT * FROM [Courses] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL";
+                    if (filter != null)
+                    {
+                        sqlQuery = "SELECT * FROM [Courses] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL AND [Status] = @status";
+                    }
+                    else
+                    {
+                        sqlQuery = "SELECT * FROM [Courses] WHERE [Name] LIKE @keyword AND [DeletedAt] IS NULL";
+                    }
                 }
 
                 SqlCommand cmd = new SqlCommand(sqlQuery, connection);
@@ -136,11 +195,12 @@ namespace TrainingFPTCo.Models.Queries
                 {
                     cmd.Parameters.AddWithValue("@status", filter ?? DBNull.Value.ToString());
                 }
+                if (!string.IsNullOrEmpty(category))
+                {
+                    cmd.Parameters.AddWithValue("@categoryName", "%" + category + "%");
+                }
 
-
-                string sql = "SELECT [co].*, [ca].[Name] FROM [Courses] AS [co] INNER JOIN [Categories] AS [ca] ON [co].[CategoryId] = [ca].[Id] WHERE [co].[DeletedAt] IS NULL";
                 connection.Open();
-                //SqlCommand cmd = new SqlCommand(sql, connection);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())

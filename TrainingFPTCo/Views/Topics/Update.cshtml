@@ -171,7 +171,7 @@
 
                             <div class="form-group mb-3">
                                 <label asp-for="AttachFile"></label>
-                                <input type="file" asp-for="AttachFile" class="form-control" onchange="validateFileType(this)" />
+                                <input type="file" asp-for="AttachFile" class="form-control" />
                                 <span asp-validation-for="AttachFile"></span>
                             </div>
 
@@ -223,15 +223,4 @@
         }
     }
 </script>
-<script>
-    function validateFileType(input) {
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']; // Các loại tệp PDF và DOC cho phép
-        const file = input.files[0];
-        if (file) {
-            if (!allowedTypes.includes(file.type)) {
-                input.value = ''; // Xóa tệp đã chọn
-                alert('Only PDF and DOC files are allowed.'); // Thông báo lỗi
-            }
-        }
-    }
-</script>
+
